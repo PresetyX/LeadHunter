@@ -1,8 +1,24 @@
 # LeadHunter
 
+[![CI](https://github.com/PresetyX/LeadHunter/actions/workflows/ci.yml/badge.svg)](https://github.com/PresetyX/LeadHunter/actions/workflows/ci.yml)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6)
+![Vercel](https://img.shields.io/badge/deploy-Vercel-black)
+
 **SaaS de geração de leads B2B para empresas locais.** Informe um *nicho* (ex.: "dentista") e uma *cidade* (ex.: "Jundiaí") e receba uma lista de empresas com telefone, WhatsApp, site, e-mail e redes sociais, pronta para exportar em CSV (Excel) ou XLSX e usar em prospecção.
 
-> Produção: <https://leadhunter-xi-indol.vercel.app>
+**🔗 Em produção: <https://leadhunter-xi-indol.vercel.app>**
+
+<!-- Adicione um screenshot ou GIF do dashboard: ![LeadHunter](docs/dashboard.png) -->
+
+### Em resumo
+
+| | |
+| --- | --- |
+| **Problema** | Prospectar empresas locais exige horas copiando dados do Google Maps e procurando contato em cada site. |
+| **Solução** | Uma busca de menos de um minuto que coleta, deduplica e enriquece os leads e exporta a planilha pronta. |
+| **Produto** | SaaS pago no ar (Mercado Pago: Pix e cartão), com planos por volume e cotas aplicadas no servidor. |
+| **Engenharia** | Next.js 15 + TypeScript na Vercel, streaming NDJSON, cancelamento real, cache de 7 dias, trava de custo da API do Google e 33 testes automatizados no CI. |
 
 ---
 
@@ -157,10 +173,22 @@ npm run dev                    # http://localhost:3000
 Outros comandos:
 
 ```bash
-npm test          # testes automatizados (normalização, dedupe, cotas, pagamentos, trava da Google)
+npm test          # testes automatizados (node:test)
 npm run build     # build de produção
 npm start         # serve o build de produção
 ```
+
+### Testes e CI
+
+São 33 testes com `node:test`, sem chamar APIs reais, focados nas regras que envolvem dinheiro e custo:
+
+- **Pagamentos:** só libera pagamento aprovado, em BRL, com o valor mínimo de cada produto e referência válida; confere o HMAC do webhook do Mercado Pago.
+- **Cotas:** limites do vitalício, dos planos mensais e do pacote de créditos (inclusive estorno), renovação e expiração de ciclo, busca repetida em 7 dias sem consumo, devolução da busca que falha e dia contado no horário de Brasília.
+- **Trava da Google:** bloqueia ao atingir o teto mesmo com chamadas paralelas, zera na virada do mês e não libera além do contado quando a leitura falha.
+- **Coleta e normalização:** divisão em quadrantes e teto de chamadas em cidades grandes, telefones brasileiros, deduplicação, extração de e-mail, WhatsApp e redes do HTML e CSV seguro para o Excel.
+- **Cancelamento:** o prazo interno zera e o pool para de pegar novas tarefas.
+
+O GitHub Actions roda os testes, o `tsc --noEmit` e o build de produção a cada push e pull request.
 
 > **Sem credenciais?** Para testar a interface localmente sem Blob nem Postgres, defina `LEADHUNTER_TEST_MEMORY_STORE=1` (armazenamento em memória, apenas fora da Vercel). Sem `PLACES_API_KEY`, a busca usa o OpenStreetMap.
 
