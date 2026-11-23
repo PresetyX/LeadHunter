@@ -154,6 +154,29 @@ Os preços, limites e cotas ficam no servidor (`lib/plan.ts`), então o cliente 
 - Cabeçalhos de segurança (CSP, HSTS, `X-Frame-Options`, etc.) em `next.config.mjs`.
 - Enriquecimento com proteção básica contra SSRF (bloqueia hosts internos).
 
+### Decisões de design
+
+- **Resposta em streaming NDJSON, não uma resposta única.** A busca e o enriquecimento levam
+  tempo; com eventos (`status`, `partial`, `result`, `error`) a tela mostra progresso e os
+  primeiros leads antes do fim. O custo é um cliente que precisa tratar eventos e cancelamento.
+- **Cancelamento de verdade.** Fechar a conexão interrompe a busca no servidor, então ela não
+  gasta API, não enriquece sites e não debita leads que ninguém recebeu.
+- **Trava global mensal nas chamadas ao Google Places.** A busca pede telefone e site, o que cai
+  na faixa Enterprise (1.000 chamadas grátis por mês e cerca de US$ 35 a cada 1.000 depois),
+  e cada busca usa de 3 a 18 chamadas. Ao atingir o teto, a busca cai para o OpenStreetMap em
+  vez de gerar cobrança inesperada.
+- **Cache de 7 dias.** Uma busca repetida não chama a API e não consome leads de quem repete.
+- **Preços, planos e cotas só no servidor** (`lib/plan.ts`, `lib/quota.ts`). O cliente não
+  decide nada que envolva dinheiro, e a reserva da cota de leads e buscas é atômica.
+- **Pagamento confirmado no servidor.** O webhook do Mercado Pago exige assinatura HMAC válida e
+  o acesso só é liberado para pagamento aprovado, em BRL e com o valor mínimo do produto.
+- **Armazenamento escolhido por variável de ambiente.** Postgres (`DATABASE_URL`) ou Vercel Blob
+  privado atrás da mesma interface `Store` (`lib/store.ts`). No Blob, o e-mail único usa criação
+  atômica e as atualizações usam ETag (`ifMatch`).
+- **Cadeia de fontes com fallback.** Google Places é a principal, o Outscraper entra só se
+  estiver configurado e o Google não trouxer nada, e o OpenStreetMap (gratuito) é o último
+  recurso. Cada fonte fica em seu próprio módulo em `lib/sources`.
+
 ---
 
 ## 4. Instalação local e execução
@@ -235,3 +258,7 @@ A busca pede telefone e site, o que cai na faixa **Enterprise** da Google: **1.0
 ## Uso responsável
 
 Os dados vêm de fontes públicas e de APIs oficiais. Para prospecção, respeite a **LGPD** (base legal de legítimo interesse e opção fácil de descadastro) e os termos de uso das fontes. Nominatim e Overpass são serviços comunitários: evite buscas em massa.
+
+## Licença
+
+Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).
