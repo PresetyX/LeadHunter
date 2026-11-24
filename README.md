@@ -259,6 +259,10 @@ A busca pede telefone e site, o que cai na faixa **Enterprise** da Google: **1.0
 
 Os dados vêm de fontes públicas e de APIs oficiais. Para prospecção, respeite a **LGPD** (base legal de legítimo interesse e opção fácil de descadastro) e os termos de uso das fontes. Nominatim e Overpass são serviços comunitários: evite buscas em massa.
 
+## Histórico de desenvolvimento
+
+Projeto desenvolvido localmente entre 04/11/2026 e 13/11/2026. O histórico de commits foi criado depois, e as datas dos commits foram ajustadas para corresponder ao período em que o trabalho foi realmente feito.
+
 ## Licença
 
 Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).
