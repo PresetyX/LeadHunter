@@ -1,3 +1,5 @@
+🌐 **English** | [Português (BR)](README.pt-BR.md)
+
 # LeadHunter
 
 [![CI](https://github.com/PresetyX/LeadHunter/actions/workflows/ci.yml/badge.svg)](https://github.com/PresetyX/LeadHunter/actions/workflows/ci.yml)
@@ -5,264 +7,266 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6)
 ![Vercel](https://img.shields.io/badge/deploy-Vercel-black)
 
-**SaaS de geração de leads B2B para empresas locais.** Informe um *nicho* (ex.: "dentista") e uma *cidade* (ex.: "Jundiaí") e receba uma lista de empresas com telefone, WhatsApp, site, e-mail e redes sociais, pronta para exportar em CSV (Excel) ou XLSX e usar em prospecção.
+**B2B lead generation SaaS for local businesses.** Enter a *niche* (e.g. "dentist") and a *city* (e.g. "Jundiaí") and get a list of companies with phone, WhatsApp, website, email and social networks, ready to export as CSV (Excel) or XLSX and use for prospecting.
 
-**🔗 Em produção: <https://leadhunter-xi-indol.vercel.app>**
+**🔗 Live: <https://leadhunter-xi-indol.vercel.app>**
 
-<!-- Adicione um screenshot ou GIF do dashboard: ![LeadHunter](docs/dashboard.png) -->
+<!-- Add a screenshot or GIF of the dashboard: ![LeadHunter](docs/dashboard.png) -->
 
-### Em resumo
+> The product targets the Brazilian market, so the interface is in Portuguese, prices are in Brazilian reais (R$) and payments go through Mercado Pago (Pix and card).
+
+### At a glance
 
 | | |
 | --- | --- |
-| **Problema** | Prospectar empresas locais exige horas copiando dados do Google Maps e procurando contato em cada site. |
-| **Solução** | Uma busca de menos de um minuto que coleta, deduplica e enriquece os leads e exporta a planilha pronta. |
-| **Produto** | SaaS pago no ar (Mercado Pago: Pix e cartão), com planos por volume e cotas aplicadas no servidor. |
-| **Engenharia** | Next.js 15 + TypeScript na Vercel, streaming NDJSON, cancelamento real, cache de 7 dias, trava de custo da API do Google e 33 testes automatizados no CI. |
+| **Problem** | Prospecting local businesses takes hours of copying data from Google Maps and hunting for contact details on each website. |
+| **Solution** | A search that takes under a minute: it collects, deduplicates and enriches the leads and exports the finished spreadsheet. |
+| **Product** | A paid SaaS that is live (Mercado Pago: Pix and card), with volume-based plans and quotas enforced on the server. |
+| **Engineering** | Next.js 15 + TypeScript on Vercel, NDJSON streaming, real cancellation, a 7-day cache, a cost cap on the Google API and 33 automated tests in CI. |
 
 ---
 
-## 1. Visão geral da plataforma
+## 1. Platform overview
 
-Prospectar empresas locais costuma significar horas copiando dados do Google Maps, procurando o site de cada negócio e caçando um e-mail ou WhatsApp. O LeadHunter automatiza esse fluxo em uma busca de menos de um minuto:
+Prospecting local businesses usually means hours of copying data from Google Maps, looking up each business's website and hunting for an email or WhatsApp number. LeadHunter automates that flow in a search that takes under a minute:
 
-1. **Coleta** os estabelecimentos na base oficial do Google Maps (Places API).
-2. **Normaliza e deduplica** os registros (telefones no padrão `55DDDNÚMERO`, URLs limpas, duplicatas fundidas).
-3. **Enriquece** cada empresa visitando o site dela: e-mail, WhatsApp, Instagram, Facebook, LinkedIn, TikTok e YouTube.
-4. **Entrega** a tabela na tela, em tempo real, e permite exportar para CSV (UTF-8 com BOM, abre direto no Excel) ou XLSX.
+1. **Collects** businesses from Google Maps' official database (Places API).
+2. **Normalizes and deduplicates** the records (phone numbers in the `55AREACODENUMBER` format, clean URLs, duplicates merged).
+3. **Enriches** each company by visiting its website: email, WhatsApp, Instagram, Facebook, LinkedIn, TikTok and YouTube.
+4. **Delivers** the table on screen, in real time, and lets you export to CSV (UTF-8 with BOM, opens directly in Excel) or XLSX.
 
-O produto é vendido com acesso pago (Mercado Pago, Pix ou cartão), com planos por volume de leads e travas de uso para proteger a margem e a cota da API do Google.
+The product is sold with paid access (Mercado Pago, Pix or card), with plans by lead volume and usage caps to protect the margin and the Google API quota.
 
-### Para quem é
+### Who it's for
 
-- **Agências de marketing e social media**, que precisam de listas segmentadas por nicho e região.
-- **Vendedores e SDRs B2B**, que fazem cold call, WhatsApp e e-mail frio.
-- **Freelancers e prestadores de serviço** (sites, tráfego pago, automação, contabilidade) que prospectam negócios locais.
-- **Consultorias e franquias**, para mapear mercado e concorrência por cidade.
+- **Marketing and social media agencies**, which need lists segmented by niche and region.
+- **B2B salespeople and SDRs**, who do cold calls, WhatsApp and cold email.
+- **Freelancers and service providers** (websites, paid traffic, automation, accounting) who prospect local businesses.
+- **Consultancies and franchises**, to map the market and competition by city.
 
 ---
 
-## 2. Arquitetura e tecnologias
+## 2. Architecture and technologies
 
-| Camada | Tecnologia |
+| Layer | Technology |
 | --- | --- |
-| Front-end e back-end | **Next.js 15** (App Router), **React 19**, **TypeScript** |
-| Estilo | Tailwind CSS 3, ícones Lucide, tema escuro com verde neon (`#A9EA2E` / `#82C91E`) |
-| Runtime | **Node.js** (>= 20), funções serverless na **Vercel** (região `gru1`, São Paulo) |
-| Fonte de dados principal | **Google Places API (New)**, Text Search |
-| Fontes alternativas | Outscraper (opcional) e OpenStreetMap (Nominatim + Overpass, gratuito) |
-| Pagamentos | **Mercado Pago** (Checkout Pro: Pix e cartão) + webhook assinado |
-| Autenticação | Sessão em cookie JWT (`jose`), senhas com hash, sessão de um dispositivo por vez |
-| Armazenamento | **Vercel Blob** (privado) ou **Postgres** (Neon), escolhido por variável de ambiente |
-| Planilhas | ExcelJS (XLSX), geração de CSV própria |
-| Métricas | Vercel Web Analytics |
+| Front end and back end | **Next.js 15** (App Router), **React 19**, **TypeScript** |
+| Styling | Tailwind CSS 3, Lucide icons, dark theme with neon green (`#A9EA2E` / `#82C91E`) |
+| Runtime | **Node.js** (>= 20), serverless functions on **Vercel** (region `gru1`, São Paulo) |
+| Main data source | **Google Places API (New)**, Text Search |
+| Alternative sources | Outscraper (optional) and OpenStreetMap (Nominatim + Overpass, free) |
+| Payments | **Mercado Pago** (Checkout Pro: Pix and card) + signed webhook |
+| Authentication | JWT cookie session (`jose`), hashed passwords, one device at a time |
+| Storage | **Vercel Blob** (private) or **Postgres** (Neon), chosen by environment variable |
+| Spreadsheets | ExcelJS (XLSX), custom CSV generation |
+| Metrics | Vercel Web Analytics |
 
-### Fluxo de uma busca
-
-```
-Navegador ──POST /api/search──▶ valida sessão e pagamento
-                                  │
-                                  ├─ reserva a busca na cota do usuário (operação atômica)
-                                  ├─ cache de 7 dias? ──sim──▶ devolve do cache (não consulta o Google)
-                                  │
-                                  ├─ 1) Google Places  (principal; com trava global mensal de chamadas)
-                                  ├─ 2) Outscraper     (opcional, só se configurado e o Google não trouxe nada)
-                                  ├─ 3) OpenStreetMap  (último recurso, gratuito)
-                                  │
-                                  ├─ dedupe ─▶ envia resultado parcial na hora (streaming NDJSON)
-                                  ├─ enriquecimento dos sites (e-mail, WhatsApp, redes sociais)
-                                  └─ grava no cache e debita os leads entregues
-```
-
-Pontos de desenho que valem destacar:
-
-- **Streaming NDJSON.** A resposta chega por eventos (`status`, `partial`, `result`, `error`), então a tela mostra progresso e os primeiros leads antes do fim do enriquecimento.
-- **Cancelamento real.** O botão *Parar* fecha a conexão e o servidor interrompe a busca de verdade: não gasta API, não enriquece sites e não debita leads que ninguém recebeu.
-- **Limite do serverless.** A função tem orçamento interno de 52 s (`maxDuration = 60`). Perto do limite, devolve o que já foi enriquecido em vez de estourar o timeout.
-- **Cobertura de cidades grandes.** O Google devolve no máximo 60 lugares por consulta. Para cobrir mais, a busca roda sinônimos do nicho e divide o mapa da cidade em quadrantes enquanto as consultas "lotarem", sempre dentro de um teto de chamadas por busca.
-- **Cache de 7 dias.** Buscas repetidas saem do cache, sem nova chamada à API e sem consumir leads de quem repete a busca.
-- **Trava de custo da Google.** Um contador global mensal bloqueia novas chamadas ao Google ao atingir o teto configurado e a busca cai para o OpenStreetMap, em vez de gerar cobrança inesperada.
-
-### Estrutura do repositório
+### Flow of a search
 
 ```
-app/                 páginas e rotas de API (App Router)
-  api/auth/          login, logout, registro, sessão
-  api/search/        busca de leads em streaming
-  api/export/        exportação XLSX
-  api/checkout/      criação do pagamento e verificação
-  api/webhooks/      webhook do Mercado Pago
-components/          interface (dashboard, preços, painel de uso)
-lib/                 regras de negócio
+Browser ──POST /api/search──▶ validates session and payment
+                                  │
+                                  ├─ reserves the search in the user's quota (atomic operation)
+                                  ├─ 7-day cache? ──yes──▶ returns from cache (does not query Google)
+                                  │
+                                  ├─ 1) Google Places  (main; with a global monthly call cap)
+                                  ├─ 2) Outscraper     (optional, only if configured and Google returned nothing)
+                                  ├─ 3) OpenStreetMap  (last resort, free)
+                                  │
+                                  ├─ dedupe ─▶ sends a partial result right away (NDJSON streaming)
+                                  ├─ website enrichment (email, WhatsApp, social networks)
+                                  └─ writes to the cache and debits the delivered leads
+```
+
+Design points worth highlighting:
+
+- **NDJSON streaming.** The response arrives as events (`status`, `partial`, `result`, `error`), so the screen shows progress and the first leads before enrichment finishes.
+- **Real cancellation.** The *Stop* button closes the connection and the server actually halts the search: it doesn't spend API calls, doesn't enrich websites and doesn't debit leads nobody received.
+- **Serverless limit.** The function has an internal budget of 52 s (`maxDuration = 60`). Near the limit, it returns what has already been enriched instead of hitting the timeout.
+- **Coverage of large cities.** Google returns at most 60 places per query. To cover more, the search runs niche synonyms and splits the city map into quadrants while the queries keep "filling up", always within a cap on calls per search.
+- **7-day cache.** Repeated searches come from the cache, with no new API call and without consuming leads from whoever repeats the search.
+- **Google cost cap.** A global monthly counter blocks new Google calls once the configured ceiling is reached, and the search falls back to OpenStreetMap instead of causing an unexpected bill.
+
+### Repository structure
+
+```
+app/                 pages and API routes (App Router)
+  api/auth/          login, logout, sign-up, session
+  api/search/        streaming lead search
+  api/export/        XLSX export
+  api/checkout/      payment creation and verification
+  api/webhooks/      Mercado Pago webhook
+components/          interface (dashboard, pricing, usage panel)
+lib/                 business rules
   sources/           Google Places, Outscraper, OpenStreetMap
-  plan.ts            catálogo de produtos, preços e limites
-  pricing.ts         promoção dinâmica (vitalício x mensal)
-  quota.ts           cotas de leads e buscas por dia
-  places-budget.ts   trava global mensal de chamadas ao Google
-  enrich.ts          extração de e-mail, WhatsApp e redes sociais
-tests/               testes automatizados (node:test)
+  plan.ts            product catalog, prices and limits
+  pricing.ts         dynamic promotion (lifetime vs. monthly)
+  quota.ts           lead and daily search quotas
+  places-budget.ts   global monthly cap on Google calls
+  enrich.ts          email, WhatsApp and social network extraction
+tests/               automated tests (node:test)
 ```
 
 ---
 
-## 3. Funcionalidades e casos de uso de negócio
+## 3. Features and business use cases
 
-### Funcionalidades
+### Features
 
-- **Busca por nicho e cidade**, com sinônimos do nicho para aumentar a cobertura.
-- **Dados por lead:** nome, categoria, endereço, telefone, WhatsApp, site, e-mail, redes sociais, nota e número de avaliações.
-- **Enriquecimento automático** dos sites das empresas.
-- **Exportação** em CSV (UTF-8-SIG, separador `;`, telefones preservados no Excel) e XLSX (cabeçalho fixo, filtros, links clicáveis, WhatsApp como link `wa.me`), com proteção contra injeção de fórmula.
-- **Painel de uso:** leads restantes, buscas do dia e validade do plano.
-- **Pagamento por Pix ou cartão** via Mercado Pago, com liberação automática do acesso.
-- **Painel de upgrade** quando o limite acaba: pacote de créditos extra ou migração para um plano mensal.
-- **Modo de pré-visualização de preços** (`dev-toggle`), visível apenas para e-mails listados em `ADMIN_EMAILS`, para ver a transição entre a oferta vitalícia e os planos mensais.
+- **Search by niche and city**, with niche synonyms to increase coverage.
+- **Data per lead:** name, category, address, phone, WhatsApp, website, email, social networks, rating and number of reviews.
+- **Automatic enrichment** of the companies' websites.
+- **Export** to CSV (UTF-8-SIG, `;` separator, phone numbers preserved in Excel) and XLSX (frozen header, filters, clickable links, WhatsApp as a `wa.me` link), with protection against formula injection.
+- **Usage panel:** remaining leads, searches for the day and plan validity.
+- **Payment by Pix or card** through Mercado Pago, with automatic access release.
+- **Upgrade panel** when the limit runs out: an extra credit pack or a move to a monthly plan.
+- **Price preview mode** (`dev-toggle`), visible only to emails listed in `ADMIN_EMAILS`, to see the transition between the lifetime offer and the monthly plans.
 
-### Modelo comercial
+### Commercial model
 
-**Oferta de lançamento (primeiras 50 vendas).** Enquanto houver menos de 50 vendas concluídas, a página de preços destaca o plano vitalício e uma etiqueta de escassez ("Oferta de Lançamento: X/50 vagas restantes").
+**Launch offer (first 50 sales).** While there are fewer than 50 completed sales, the pricing page highlights the lifetime plan and a scarcity badge ("Launch Offer: X/50 spots left").
 
-| Produto | Preço | Inclui |
+| Product | Price | Includes |
 | --- | --- | --- |
-| **Vitalício de lançamento** | R$ 30, pagamento único | Até 1.000 leads no total e até 10 buscas por dia |
-| **Pacote de Créditos Extra** | R$ 15 | +1.000 leads, não expira |
+| **Launch lifetime** | R$ 30, one-time payment | Up to 1,000 leads in total and up to 10 searches per day |
+| **Extra Credits Pack** | R$ 15 | +1,000 leads, never expires |
 
-**Planos mensais.** Quando as 50 vendas são atingidas, a área de preços muda sozinha para os planos mensais (Pix ou cartão, cada pagamento libera 30 dias, sem fidelidade):
+**Monthly plans.** When the 50 sales are reached, the pricing area switches by itself to the monthly plans (Pix or card, each payment unlocks 30 days, no lock-in):
 
-| Plano | Preço | Leads por mês | Buscas por dia |
+| Plan | Price | Leads per month | Searches per day |
 | --- | --- | --- | --- |
-| **Básico** | R$ 29,90 | até 1.000 | 20 |
-| **Pro** (mais popular) | R$ 59,90 | até 4.500 | 40 |
-| **Business** | R$ 149,90 | ilimitado, com trava interna de uso justo (30.000/mês) | 100 |
+| **Basic** | R$ 29.90 | up to 1,000 | 20 |
+| **Pro** (most popular) | R$ 59.90 | up to 4,500 | 40 |
+| **Business** | R$ 149.90 | unlimited, with an internal fair-use cap (30,000/month) | 100 |
 
-Os preços, limites e cotas ficam no servidor (`lib/plan.ts`), então o cliente não consegue alterá-los.
+Prices, limits and quotas live on the server (`lib/plan.ts`), so the client cannot change them.
 
-### Casos de uso
+### Use cases
 
-- **Agência de tráfego pago:** buscar "clínicas de estética" em 5 cidades, exportar o XLSX e enviar proposta por WhatsApp para quem não tem site.
-- **SDR de software B2B:** montar listas de "escritórios de contabilidade" por região com e-mail e telefone para cadência de cold call.
-- **Freelancer de sites:** listar empresas locais sem site (campo de site vazio) e oferecer criação de página.
-- **Franquia ou expansão:** mapear a concorrência e a densidade de um nicho por cidade.
+- **Paid traffic agency:** search "aesthetic clinics" in 5 cities, export the XLSX and send a proposal via WhatsApp to those without a website.
+- **B2B software SDR:** build lists of "accounting firms" by region with email and phone for a cold-call cadence.
+- **Website freelancer:** list local businesses with no website (empty website field) and offer to build a page.
+- **Franchise or expansion:** map the competition and the density of a niche by city.
 
-### Segurança
+### Security
 
-- Sessão por cookie assinado, **um dispositivo por vez**, expiração por inatividade de 30 min e batimento de sessão enquanto a aba está visível.
-- Limite de tentativas de login por IP e por e-mail.
-- Verificação de origem (*same-origin*) nas rotas que alteram estado.
-- Pagamento confirmado **no servidor**, consultando a API do Mercado Pago; o webhook exige assinatura HMAC válida.
-- Cota de leads e buscas reservada de forma atômica, sem brecha para burlar login ou pagamento pelo cliente.
-- Cabeçalhos de segurança (CSP, HSTS, `X-Frame-Options`, etc.) em `next.config.mjs`.
-- Enriquecimento com proteção básica contra SSRF (bloqueia hosts internos).
+- Signed cookie session, **one device at a time**, 30-minute inactivity expiry and a session heartbeat while the tab is visible.
+- Login attempt limit per IP and per email.
+- Same-origin check on routes that change state.
+- Payment confirmed **on the server**, by querying the Mercado Pago API; the webhook requires a valid HMAC signature.
+- Lead and search quota reserved atomically, leaving no gap to bypass login or payment from the client.
+- Security headers (CSP, HSTS, `X-Frame-Options`, etc.) in `next.config.mjs`.
+- Enrichment with basic SSRF protection (blocks internal hosts).
 
-### Decisões de design
+### Design decisions
 
-- **Resposta em streaming NDJSON, não uma resposta única.** A busca e o enriquecimento levam
-  tempo; com eventos (`status`, `partial`, `result`, `error`) a tela mostra progresso e os
-  primeiros leads antes do fim. O custo é um cliente que precisa tratar eventos e cancelamento.
-- **Cancelamento de verdade.** Fechar a conexão interrompe a busca no servidor, então ela não
-  gasta API, não enriquece sites e não debita leads que ninguém recebeu.
-- **Trava global mensal nas chamadas ao Google Places.** A busca pede telefone e site, o que cai
-  na faixa Enterprise (1.000 chamadas grátis por mês e cerca de US$ 35 a cada 1.000 depois),
-  e cada busca usa de 3 a 18 chamadas. Ao atingir o teto, a busca cai para o OpenStreetMap em
-  vez de gerar cobrança inesperada.
-- **Cache de 7 dias.** Uma busca repetida não chama a API e não consome leads de quem repete.
-- **Preços, planos e cotas só no servidor** (`lib/plan.ts`, `lib/quota.ts`). O cliente não
-  decide nada que envolva dinheiro, e a reserva da cota de leads e buscas é atômica.
-- **Pagamento confirmado no servidor.** O webhook do Mercado Pago exige assinatura HMAC válida e
-  o acesso só é liberado para pagamento aprovado, em BRL e com o valor mínimo do produto.
-- **Armazenamento escolhido por variável de ambiente.** Postgres (`DATABASE_URL`) ou Vercel Blob
-  privado atrás da mesma interface `Store` (`lib/store.ts`). No Blob, o e-mail único usa criação
-  atômica e as atualizações usam ETag (`ifMatch`).
-- **Cadeia de fontes com fallback.** Google Places é a principal, o Outscraper entra só se
-  estiver configurado e o Google não trouxer nada, e o OpenStreetMap (gratuito) é o último
-  recurso. Cada fonte fica em seu próprio módulo em `lib/sources`.
+- **NDJSON streaming response, not a single response.** Search and enrichment take
+  time; with events (`status`, `partial`, `result`, `error`) the screen shows progress and the
+  first leads before the end. The cost is a client that has to handle events and cancellation.
+- **Real cancellation.** Closing the connection halts the search on the server, so it doesn't
+  spend API calls, doesn't enrich websites and doesn't debit leads nobody received.
+- **Global monthly cap on Google Places calls.** The search asks for phone and website, which falls
+  into the Enterprise tier (1,000 free calls per month and about US$ 35 per 1,000 after that),
+  and each search uses 3 to 18 calls. Once the ceiling is reached, the search falls back to OpenStreetMap
+  instead of causing an unexpected bill.
+- **7-day cache.** A repeated search doesn't call the API and doesn't consume leads from whoever repeats it.
+- **Prices, plans and quotas only on the server** (`lib/plan.ts`, `lib/quota.ts`). The client doesn't
+  decide anything involving money, and the reservation of the lead and search quota is atomic.
+- **Payment confirmed on the server.** The Mercado Pago webhook requires a valid HMAC signature and
+  access is only released for an approved payment, in BRL and at the product's minimum amount.
+- **Storage chosen by environment variable.** Postgres (`DATABASE_URL`) or private Vercel Blob
+  behind the same `Store` interface (`lib/store.ts`). On Blob, the unique email uses atomic
+  creation and updates use ETag (`ifMatch`).
+- **Source chain with fallback.** Google Places is the main one, Outscraper only comes in if
+  it is configured and Google returned nothing, and OpenStreetMap (free) is the last
+  resort. Each source lives in its own module under `lib/sources`.
 
 ---
 
-## 4. Instalação local e execução
+## 4. Local installation and running
 
-**Pré-requisitos:** Node.js 20 ou superior e npm.
+**Prerequisites:** Node.js 20 or higher and npm.
 
 ```bash
 git clone https://github.com/PresetyX/LeadHunter.git
 cd LeadHunter
 
 npm install
-cp .env.example .env.local     # preencha as variáveis (veja a seção 5)
+cp .env.example .env.local     # fill in the variables (see section 5)
 
 npm run dev                    # http://localhost:3000
 ```
 
-Outros comandos:
+Other commands:
 
 ```bash
-npm test          # testes automatizados (node:test)
-npm run build     # build de produção
-npm start         # serve o build de produção
+npm test          # automated tests (node:test)
+npm run build     # production build
+npm start         # serves the production build
 ```
 
-### Testes e CI
+### Tests and CI
 
-São 33 testes com `node:test`, sem chamar APIs reais, focados nas regras que envolvem dinheiro e custo:
+There are 33 tests with `node:test`, without calling real APIs, focused on the rules that involve money and cost:
 
-- **Pagamentos:** só libera pagamento aprovado, em BRL, com o valor mínimo de cada produto e referência válida; confere o HMAC do webhook do Mercado Pago.
-- **Cotas:** limites do vitalício, dos planos mensais e do pacote de créditos (inclusive estorno), renovação e expiração de ciclo, busca repetida em 7 dias sem consumo, devolução da busca que falha e dia contado no horário de Brasília.
-- **Trava da Google:** bloqueia ao atingir o teto mesmo com chamadas paralelas, zera na virada do mês e não libera além do contado quando a leitura falha.
-- **Coleta e normalização:** divisão em quadrantes e teto de chamadas em cidades grandes, telefones brasileiros, deduplicação, extração de e-mail, WhatsApp e redes do HTML e CSV seguro para o Excel.
-- **Cancelamento:** o prazo interno zera e o pool para de pegar novas tarefas.
+- **Payments:** only approved payments are released, in BRL, at each product's minimum amount and with a valid reference; checks the Mercado Pago webhook HMAC.
+- **Quotas:** limits for the lifetime plan, the monthly plans and the credit pack (including refunds), cycle renewal and expiry, a repeated search within 7 days without consumption, giving back a search that fails, and the day counted in Brasília time.
+- **Google cap:** blocks when the ceiling is reached even with parallel calls, resets at the turn of the month and doesn't release more than what was counted when a read fails.
+- **Collection and normalization:** quadrant splitting and call cap in large cities, Brazilian phone numbers, deduplication, extraction of email, WhatsApp and social networks from HTML, and Excel-safe CSV.
+- **Cancellation:** the internal deadline drops to zero and the pool stops picking up new tasks.
 
-O GitHub Actions roda os testes, o `tsc --noEmit` e o build de produção a cada push e pull request.
+GitHub Actions runs the tests, `tsc --noEmit` and the production build on every push and pull request.
 
-> **Sem credenciais?** Para testar a interface localmente sem Blob nem Postgres, defina `LEADHUNTER_TEST_MEMORY_STORE=1` (armazenamento em memória, apenas fora da Vercel). Sem `PLACES_API_KEY`, a busca usa o OpenStreetMap.
+> **No credentials?** To try the interface locally without Blob or Postgres, set `LEADHUNTER_TEST_MEMORY_STORE=1` (in-memory storage, outside Vercel only). Without `PLACES_API_KEY`, the search uses OpenStreetMap.
 
-### Deploy na Vercel
+### Deploying to Vercel
 
 ```bash
 npm i -g vercel
 vercel --prod
 ```
 
-Cadastre as variáveis de ambiente em *Settings > Environment Variables* do projeto (marque segredos como **Sensitive**). Variáveis só valem em deploys novos, então faça um novo deploy depois de criá-las ou alterá-las.
+Add the environment variables under *Settings > Environment Variables* of the project (mark secrets as **Sensitive**). Variables only apply to new deployments, so redeploy after creating or changing them.
 
 ---
 
-## 5. Variáveis de ambiente
+## 5. Environment variables
 
-Copie `.env.example` para `.env.local` (desenvolvimento) ou cadastre as mesmas chaves na Vercel (produção). **Nunca faça commit de chaves reais.**
+Copy `.env.example` to `.env.local` (development) or add the same keys on Vercel (production). **Never commit real keys.**
 
-| Variável | Obrigatória | Descrição |
+| Variable | Required | Description |
 | --- | --- | --- |
-| `AUTH_SECRET` | sim | Segredo das sessões. Gere com `openssl rand -base64 48`. |
-| `BLOB_READ_WRITE_TOKEN` | uma das duas | Token do Vercel Blob, usado para usuários, cache e contador de chamadas. |
-| `DATABASE_URL` | uma das duas | Alternativa ao Blob: Postgres (Neon). |
-| `MP_ACCESS_TOKEN` | sim | Access token do Mercado Pago (Checkout Pro). |
-| `MP_WEBHOOK_SECRET` | sim | Segredo para validar a assinatura do webhook do Mercado Pago. |
-| `PLACES_API_KEY` | recomendada | Chave da Google Cloud Places API (New). Sem ela a busca cai no OpenStreetMap. Restrinja a chave à Places API. |
-| `PLACES_MONTHLY_CALL_CAP` | não | Teto global de chamadas ao Google por mês (padrão `900`). |
-| `GOOGLE_MAX_CALLS_PER_SEARCH` | não | Teto de chamadas ao Google por busca (padrão `18`). |
-| `SCRAPER_API_KEY` | não | Chave do Outscraper, usado só se o Google não trouxer resultados. |
-| `OUTSCRAPER_QUERY_VARIANTS` | não | Quantidade de sinônimos do nicho por busca no Outscraper (1 a 3). |
-| `NEXT_PUBLIC_APP_URL` | não | URL pública do app (retornos de pagamento e webhook). Na Vercel é inferida. |
-| `PRICING_MODE` | não | `auto` (padrão: vitalício enquanto vendas < 50), `launch` ou `monthly`. |
-| `ADMIN_EMAILS` | não | E-mails (separados por vírgula) que veem o `dev-toggle` de preços. |
-| `PRICING_DEV_TOGGLE` | não | `1` mostra o seletor para todos. Evite em produção. |
+| `AUTH_SECRET` | yes | Session secret. Generate it with `openssl rand -base64 48`. |
+| `BLOB_READ_WRITE_TOKEN` | one of the two | Vercel Blob token, used for users, cache and the call counter. |
+| `DATABASE_URL` | one of the two | Alternative to Blob: Postgres (Neon). |
+| `MP_ACCESS_TOKEN` | yes | Mercado Pago access token (Checkout Pro). |
+| `MP_WEBHOOK_SECRET` | yes | Secret to validate the Mercado Pago webhook signature. |
+| `PLACES_API_KEY` | recommended | Google Cloud Places API (New) key. Without it the search falls back to OpenStreetMap. Restrict the key to the Places API. |
+| `PLACES_MONTHLY_CALL_CAP` | no | Global cap on Google calls per month (default `900`). |
+| `GOOGLE_MAX_CALLS_PER_SEARCH` | no | Cap on Google calls per search (default `18`). |
+| `SCRAPER_API_KEY` | no | Outscraper key, used only if Google returns no results. |
+| `OUTSCRAPER_QUERY_VARIANTS` | no | Number of niche synonyms per Outscraper search (1 to 3). |
+| `NEXT_PUBLIC_APP_URL` | no | Public URL of the app (payment returns and webhook). On Vercel it is inferred. |
+| `PRICING_MODE` | no | `auto` (default: lifetime while sales < 50), `launch` or `monthly`. |
+| `ADMIN_EMAILS` | no | Emails (comma-separated) that see the pricing `dev-toggle`. |
+| `PRICING_DEV_TOGGLE` | no | `1` shows the selector to everyone. Avoid in production. |
 
-`PLACES_API_KEY` também aceita o nome antigo `GOOGLE_PLACES_API_KEY`.
+`PLACES_API_KEY` also accepts the old name `GOOGLE_PLACES_API_KEY`.
 
-### Custos da Google Places API
+### Google Places API costs
 
-A busca pede telefone e site, o que cai na faixa **Enterprise** da Google: **1.000 chamadas grátis por mês** e depois cerca de **US$ 35 a cada 1.000**. Cada busca consome de 3 a 18 chamadas. Por isso o projeto tem a trava `PLACES_MONTHLY_CALL_CAP` e o cache de 7 dias. Recomenda-se também criar um **alerta de orçamento** no Google Cloud e restringir a chave à Places API. Confira os preços atuais na documentação da Google antes de aumentar o teto.
+The search asks for phone and website, which falls into Google's **Enterprise** tier: **1,000 free calls per month** and then about **US$ 35 per 1,000**. Each search uses 3 to 18 calls. That is why the project has the `PLACES_MONTHLY_CALL_CAP` cap and the 7-day cache. It is also recommended to create a **budget alert** in Google Cloud and restrict the key to the Places API. Check the current prices in Google's documentation before raising the cap.
 
 ---
 
-## Uso responsável
+## Responsible use
 
-Os dados vêm de fontes públicas e de APIs oficiais. Para prospecção, respeite a **LGPD** (base legal de legítimo interesse e opção fácil de descadastro) e os termos de uso das fontes. Nominatim e Overpass são serviços comunitários: evite buscas em massa.
+The data comes from public sources and official APIs. For prospecting, respect **LGPD** (Brazil's data protection law: legitimate-interest legal basis and an easy opt-out) and the sources' terms of use. Nominatim and Overpass are community services: avoid bulk searches.
 
-## Histórico de desenvolvimento
+## Development history
 
-Projeto desenvolvido localmente entre 04/11/2026 e 13/11/2026. O histórico de commits foi criado depois, e as datas dos commits foram ajustadas para corresponder ao período em que o trabalho foi realmente feito.
+Developed locally between November 4 and November 13, 2026. The commit history was created afterwards, and the commit dates were adjusted to match the period in which the work was actually done.
 
-## Licença
+## License
 
-Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).
+Distributed under the MIT license. See the [LICENSE](LICENSE) file.
